@@ -55,10 +55,10 @@ namespace NEbml.Core.Tests
 		}
 		#endregion
 
-		[TestCase(0l)]
-		[TestCase(123l)]
-		[TestCase(12345678l)]
-		[TestCase(-1l)]
+		[TestCase(0L)]
+		[TestCase(123L)]
+		[TestCase(12345678L)]
+		[TestCase(-1L)]
 		[TestCase(Int64.MinValue)]
 		[TestCase(Int64.MaxValue)]
 		public void ReadWriteInt64(Int64 value)
@@ -129,9 +129,9 @@ namespace NEbml.Core.Tests
 
 		[TestCase("abc")]
 		[TestCase("")]
-		[TestCase((string)null, ExpectedException = typeof(ArgumentNullException))]
 		[TestCase("1bcdefg")]
-		public void ReadWriteStringAscii(string value)
+        
+        public void ReadWriteStringAscii(string value)
 		{
 			_writer.WriteAscii(ElementId, value);
 
@@ -139,9 +139,15 @@ namespace NEbml.Core.Tests
 			Assert.AreEqual(value, reader.ReadAscii());
 		}
 
-		[TestCase("abc")]
+        [TestCase((string)null)]
+        public void ReadWriteStringAsciiNullFails(string value)
+        {
+            Assert.Throws<ArgumentNullException>(() => _writer.WriteAscii(ElementId, value));
+        }
+
+        [TestCase("abc")]
 		[TestCase("")]
-		[TestCase((string)null, ExpectedException = typeof(ArgumentNullException))]
+		
 		[TestCase("1bcdefg")]
 		[TestCase("Йцукенг12345Qwerty\u1fa8\u263a")]
 		public void ReadWriteStringUtf(string value)
@@ -152,7 +158,15 @@ namespace NEbml.Core.Tests
 			Assert.AreEqual(value, reader.ReadUtf());
 		}
 
-		[Test]
+        [TestCase((string) null)]
+        public void WriteStringUtfNullArgFails(string value)
+        {
+            Assert.Throws<ArgumentNullException>(()=>_writer.WriteUtf(ElementId, value));
+
+        }
+
+
+        [Test]
 		public void ReadWriteContainer()
 		{
 			var innerdata = new MemoryStream();

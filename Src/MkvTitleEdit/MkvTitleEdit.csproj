@@ -88,12 +88,6 @@
     <Compile Include="ViewModel\ListEntryViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\Core.csproj">
-      <Project>{38D51CF9-B33C-434F-9E5C-44B2F8C652F2}</Project>
-      <Name>Core</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <EmbeddedResource Include="EditMkvAttributesForm.resx">
       <DependentUpon>EditMkvAttributesForm.cs</DependentUpon>
       <SubType>Designer</SubType>
