@@ -6,6 +6,7 @@
 *.user
 *.sln.docstates
 .nuget/
+.vs/
 
 # Build results
 [Dd]ebug/
@@ -55,3 +56,4 @@ UpgradeLog*.XML
 UpgradeLog*.htm
 
 !/.paket/paket.bootstrapper.exe
+Src/MigrationBackup
