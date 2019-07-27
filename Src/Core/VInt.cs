@@ -13,7 +13,7 @@ in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
 IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
@@ -31,15 +31,14 @@ namespace NEbml.Core
 	/// </summary>
 	public struct VInt
 	{
-		private readonly ulong _encodedValue;
-		private readonly sbyte _length;
+        private readonly sbyte _length;
 
 		private VInt(ulong encodedValue, int length)
 		{
 			if(length < 1 || length > 8)
-				throw new ArgumentOutOfRangeException("length");
+				throw new ArgumentOutOfRangeException(nameof(length));
 
-			_encodedValue = encodedValue;
+			EncodedValue = encodedValue;
 			_length = (sbyte)length;
 		}
 
@@ -48,20 +47,14 @@ namespace NEbml.Core
 		/// <summary>
 		/// Gets the value
 		/// </summary>
-		public ulong Value
-		{
-			get { return EncodedValue & DataBitsMask[_length]; }
-		}
+		public ulong Value => EncodedValue & DataBitsMask[_length];
 
-		/// <summary>
+        /// <summary>
 		/// Gets true if value is reserved (i.e. all data bits are zeros or 1's)
 		/// </summary>
-		public bool IsReserved
-		{
-			get { return Value == DataBitsMask[_length]; }
-		}
+		public bool IsReserved => Value == DataBitsMask[_length];
 
-		/// <summary>
+        /// <summary>
 		/// Gets true if value is correct identifier
 		/// </summary>
 		public bool IsValidIdentifier
@@ -73,22 +66,13 @@ namespace NEbml.Core
 			}
 		}
 
-		public ulong EncodedValue
-		{
-			get { return _encodedValue; }
-		}
+        public ulong EncodedValue { get; }
 
-		public int Length
-		{
-			get { return _length; }
-		}
+        public int Length => _length;
 
-		public static implicit operator ulong?(VInt value)
-		{
-			return !value.IsReserved ? value.Value : (ulong?) null;
-		}
+        public static implicit operator ulong?(VInt value) => !value.IsReserved ? value.Value : (ulong?) null;
 
-		#endregion
+        #endregion
 
 		#region constructors
 
@@ -101,11 +85,11 @@ namespace NEbml.Core
 		public static VInt EncodeSize(ulong value, int length)
 		{
 			if (value > MaxSizeValue)
-				throw new ArgumentException("Value exceed VInt capacity", "value");
+				throw new ArgumentException("Value exceed VInt capacity", nameof(value));
 			if (length < 0 || length > 8)
-				throw new ArgumentOutOfRangeException("length");
+				throw new ArgumentOutOfRangeException(nameof(length));
 			if (length > 0 && DataBitsMask[length] <= value)
-				throw new ArgumentException("Specified width is not sufficient to encode value", "value");
+				throw new ArgumentException("Specified width is not sufficient to encode value", nameof(value));
 
 			if(length == 0)
 			{
@@ -134,7 +118,7 @@ namespace NEbml.Core
 		public static VInt MakeId(uint elementId)
 		{
 			if (elementId > MaxElementIdValue)
-				throw new ArgumentException("Value exceed VInt capacity", "elementId");
+				throw new ArgumentException("Value exceed VInt capacity", nameof(elementId));
 
 			var id = EncodeSize(elementId);
 			Debug.Assert(id._length <= 4);
@@ -142,14 +126,14 @@ namespace NEbml.Core
 		}
 
 		/// <summary>
-		/// Creates VInt for unknown size (all databits are 1's)
+		/// Creates VInt for unknown size (all data bits are 1's)
 		/// </summary>
 		/// <param name="length"></param>
 		/// <returns></returns>
 		public static VInt UnknownSize(int length)
 		{
 			if (length < 0 || length > 8)
-				throw new ArgumentOutOfRangeException("length");
+				throw new ArgumentOutOfRangeException(nameof(length));
 
 			var sizeMarker = 1UL << (7 * length);
 			var dataBits   = (1UL << (7 * length)) - 1;
@@ -164,7 +148,7 @@ namespace NEbml.Core
 		public static VInt FromEncoded(ulong encodedValue)
 		{
 			if (encodedValue == 0)
-				throw new ArgumentException("Zero is not a correct value", "encodedValue");
+				throw new ArgumentException("Zero is not a correct value", nameof(encodedValue));
 
 			var mostSignificantOctetIndex = 7;
 			while ((encodedValue >> mostSignificantOctetIndex * 8) == 0x0)
@@ -176,7 +160,7 @@ namespace NEbml.Core
 			var extraBytes = (marker >> 4 > 0) ? ExtraBytesSize[marker >> 4] : 4 + ExtraBytesSize[marker];
 
 			if (extraBytes != mostSignificantOctetIndex)
-				throw new ArgumentException("Width marker does not match its position", "encodedValue");
+				throw new ArgumentException("Width marker does not match its position", nameof(encodedValue));
 
 			return new VInt(encodedValue, extraBytes + 1);
 		}
@@ -197,11 +181,9 @@ namespace NEbml.Core
 			buffer = buffer ?? new byte[maxLength];
 
 			if (source.ReadFully(buffer, 0, 1) == 0)
-			{
-				throw new EndOfStreamException();
-			}
+                throw new EndOfStreamException();
 
-			if(buffer[0] == 0)
+            if(buffer[0] == 0)
 				throw new EbmlDataFormatException("Length bigger than 8 are not supported");
 			// TODO handle EBMLMaxSizeWidth
 
@@ -210,19 +192,17 @@ namespace NEbml.Core
 				: 4 + ExtraBytesSize[buffer[0]];
 
 			if (extraBytes + 1 > maxLength)
-				throw new EbmlDataFormatException(string.Format("Expected VInt with a max length of {0}. Got {1}", maxLength, extraBytes + 1));
+				throw new EbmlDataFormatException(
+                    $"Expected VInt with a max length of {maxLength}. Got {extraBytes + 1}");
 
 			if (source.ReadFully(buffer, 1, extraBytes) != extraBytes)
-			{
-				throw new EndOfStreamException();
-			}
+                throw new EndOfStreamException();
 
-			ulong encodedValue = buffer[0];
+            ulong encodedValue = buffer[0];
 			for (var i = 0; i < extraBytes; i++)
-			{
-				encodedValue = encodedValue << 8 | buffer[i + 1];
-			}
-			return new VInt(encodedValue, extraBytes + 1);
+                encodedValue = encodedValue << 8 | buffer[i + 1];
+
+            return new VInt(encodedValue, extraBytes + 1);
 		}
 
 		/// <summary>
@@ -231,17 +211,15 @@ namespace NEbml.Core
 		/// <param name="stream"></param>
 		public int Write(Stream stream)
 		{
-			if (stream == null) throw new ArgumentNullException("stream");
+			if (stream == null) throw new ArgumentNullException(nameof(stream));
 
 			var buffer = new byte[Length];
 
 			int p = Length;
 			for (var data = EncodedValue; --p >= 0; data >>= 8)
-			{
-				buffer[p] = (byte)(data & 0xff);
-			}
+                buffer[p] = (byte) (data & 0xff);
 
-			stream.Write(buffer, 0, buffer.Length);
+            stream.Write(buffer, 0, buffer.Length);
 			return buffer.Length;
 		}
 
@@ -279,13 +257,13 @@ namespace NEbml.Core
 		{
 			unchecked
 			{
-				return (_encodedValue.GetHashCode()*397) ^ _length.GetHashCode();
+				return (EncodedValue.GetHashCode()*397) ^ _length.GetHashCode();
 			}
 		}
 
 		public bool Equals(VInt other)
 		{
-			return other._encodedValue == _encodedValue && other._length == _length;
+			return other.EncodedValue == EncodedValue && other._length == _length;
 		}
 
 		public override bool Equals(object obj)
@@ -297,9 +275,6 @@ namespace NEbml.Core
 
 		#endregion
 
-		public override string ToString()
-		{
-			return string.Format("VInt, value = {0}, length = {1}, encoded = {2:X}", Value, Length, EncodedValue);
-		}
-	}
+		public override string ToString() => $"VInt, value = {Value}, length = {Length}, encoded = {EncodedValue:X}";
+    }
 }
